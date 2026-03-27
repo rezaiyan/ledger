@@ -146,6 +146,11 @@ async function loadData(
 function buildRouter(claudeDir: string, sessionsDir: string) {
   const router = express.Router();
 
+  // GET /api/config
+  router.get('/config', (_req: Request, res: Response) => {
+    res.json({ currency: getActiveCurrency() });
+  });
+
   // GET /api/conversations
   router.get('/conversations', async (_req: Request, res: Response, next: NextFunction) => {
     try {
@@ -226,7 +231,6 @@ function buildRouter(claudeDir: string, sessionsDir: string) {
         serverTime: now.toISOString(),
         claudeDir,
         sessionsDir,
-        currency: getActiveCurrency(),
       });
     } catch (err) {
       next(err);

@@ -2,10 +2,10 @@ import React, { useMemo } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
 } from 'recharts'
-import { useSummary, useStatus, useConversations, type StatusResponse } from '../hooks/useData'
+import { useSummary, useStatus, useConversations } from '../hooks/useData'
 import StatCard from '../components/StatCard'
 import EmptyState from '../components/EmptyState'
-import { fmtCost, fmtCostAxis, fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
 import { useCurrency } from '../hooks/useCurrency'
 import type { ParsedConversation } from '../../src/types'
 
@@ -43,8 +43,7 @@ function ActiveSessionCard({ currentSession, todayCost }: {
   currentSession: Record<string, unknown>
   todayCost: number
 }) {
-  const currency = useCurrency()
-  const fmt = (v: number) => fmtCost(v, currency)
+  const { fmt } = useCurrency()
   const name = (currentSession.name as string) ?? 'Active Session'
   const goal = currentSession.goal as string | undefined
   const cost = (currentSession.cost as number) ?? 0
@@ -126,7 +125,7 @@ const CustomTooltip = ({ active, payload, label }: {
   payload?: { value: number }[]
   label?: string
 }) => {
-  const currency = useCurrency()
+  const { fmt } = useCurrency()
   if (!active || !payload?.length) return null
   return (
     <div style={{
@@ -137,7 +136,7 @@ const CustomTooltip = ({ active, payload, label }: {
       fontSize: 12,
     }}>
       <div style={{ color: '#8b949e', marginBottom: 2 }}>{label}</div>
-      <div style={{ color: '#e6edf3', fontWeight: 600 }}>{fmtCost(payload[0].value, currency)}</div>
+      <div style={{ color: '#e6edf3', fontWeight: 600 }}>{fmt(payload[0].value)}</div>
     </div>
   )
 }
@@ -146,9 +145,7 @@ export default function Overview() {
   const summary = useSummary()
   const status = useStatus()
   const conversations = useConversations()
-  const currency = useCurrency()
-  const fmt = (v: number) => fmtCost(v, currency)
-  const fmtAxis = (v: number) => fmtCostAxis(v, currency)
+  const { fmt, fmtAxis } = useCurrency()
 
   const dailyData = useMemo(() => {
     if (!conversations.data) return []

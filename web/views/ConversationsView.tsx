@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { useConversations } from '../hooks/useData'
 import EmptyState from '../components/EmptyState'
 import Badge from '../components/Badge'
-import { fmtCost, fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
 import { useCurrency } from '../hooks/useCurrency'
 import type { ParsedConversation } from '../../src/types'
 
@@ -32,6 +32,7 @@ function SortArrow({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
 }
 
 function DetailPanel({ conv }: { conv: ParsedConversation }) {
+  const { fmt } = useCurrency()
   return (
     <tr>
       <td colSpan={9} style={{ background: '#0d1117', borderBottom: '1px solid #21262d', padding: 0 }}>
@@ -88,8 +89,7 @@ const ALL_MODELS = '__all__'
 
 export default function ConversationsView() {
   const { data: conversations, loading, error, refetch } = useConversations()
-  const currency = useCurrency()
-  const fmt = (v: number) => fmtCost(v, currency)
+  const { fmt } = useCurrency()
 
   const [sortKey, setSortKey] = useState<SortKey>('startTime')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')

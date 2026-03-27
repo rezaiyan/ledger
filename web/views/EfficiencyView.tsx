@@ -7,7 +7,7 @@ import { useSessions, useSummary, useConversations } from '../hooks/useData'
 import StatCard from '../components/StatCard'
 import Badge from '../components/Badge'
 import EmptyState from '../components/EmptyState'
-import { fmtCost, fmtCostAxis, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
 import { useCurrency } from '../hooks/useCurrency'
 import type { SessionType, EnrichedSession } from '../../src/types'
 
@@ -44,7 +44,7 @@ const ChartTooltip = ({ active, payload, label }: {
   payload?: { name?: string; value?: number; color?: string }[]
   label?: string
 }) => {
-  const currency = useCurrency()
+  const { fmt } = useCurrency()
   if (!active || !payload?.length) return null
   return (
     <div style={{
@@ -57,7 +57,7 @@ const ChartTooltip = ({ active, payload, label }: {
       {label && <div style={{ color: '#8b949e', marginBottom: 4 }}>{label}</div>}
       {payload.map((p, i) => (
         <div key={i} style={{ color: p.color ?? '#e6edf3', fontWeight: 600 }}>
-          {p.name ? `${p.name}: ` : ''}{typeof p.value === 'number' ? fmtCost(p.value, currency) : p.value}
+          {p.name ? `${p.name}: ` : ''}{typeof p.value === 'number' ? fmt(p.value) : p.value}
         </div>
       ))}
     </div>
@@ -92,9 +92,7 @@ export default function EfficiencyView() {
   const { data: sessions, loading: sessLoading, error: sessError } = useSessions()
   const { data: summary, loading: sumLoading, error: sumError } = useSummary()
   const { data: conversations, loading: convLoading, error: convError } = useConversations()
-  const currency = useCurrency()
-  const fmt = (v: number) => fmtCost(v, currency)
-  const fmtAxis = (v: number) => fmtCostAxis(v, currency)
+  const { fmt, fmtAxis } = useCurrency()
 
   const loading = sessLoading || sumLoading || convLoading
   const fetchError = convError ?? sumError ?? sessError

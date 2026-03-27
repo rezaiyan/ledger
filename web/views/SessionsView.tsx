@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { useSessions } from '../hooks/useData'
 import EmptyState from '../components/EmptyState'
 import Badge from '../components/Badge'
-import { fmtCost, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
 import { useCurrency } from '../hooks/useCurrency'
 import type { SessionType, EnrichedSession } from '../../src/types'
 
@@ -104,8 +104,7 @@ function JournalPanel({ session }: { session: EnrichedSession }) {
 
 export default function SessionsView() {
   const { data: sessions, loading, error, refetch } = useSessions()
-  const currency = useCurrency()
-  const fmt = (v: number) => fmtCost(v, currency)
+  const { fmt } = useCurrency()
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(ALL_TYPES)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 

@@ -14,7 +14,6 @@ export interface StatusResponse {
   serverTime: string
   claudeDir: string
   sessionsDir: string
-  currency: string
 }
 
 interface FetchState<T> {
@@ -79,4 +78,12 @@ export function useSummary() {
 
 export function useStatus() {
   return useFetch<StatusResponse>('/api/status', 30_000)
+}
+
+export interface ConfigResponse {
+  currency: string
+}
+
+export function useConfig() {
+  return useFetch<ConfigResponse>('/api/config')
 }
