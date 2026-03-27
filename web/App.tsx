@@ -13,7 +13,7 @@ const TABS: Tab[] = ['Overview', 'Conversations', 'Sessions', 'Efficiency']
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('Overview')
   const { data: config } = useConfig()
-  const currency = config?.currency ?? 'USD'
+  const currency = config?.currency ?? 'EUR'
 
   const currencyCtx = useMemo(() => ({
     currency,

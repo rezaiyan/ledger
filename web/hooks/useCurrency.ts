@@ -7,7 +7,7 @@ export interface CurrencyContextValue {
   fmtAxis: (v: number) => string
 }
 
-const DEFAULT_CURRENCY = 'USD'
+const DEFAULT_CURRENCY = 'EUR'
 
 export const CurrencyContext = createContext<CurrencyContextValue>({
   currency: DEFAULT_CURRENCY,
