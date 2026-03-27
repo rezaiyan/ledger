@@ -1,6 +1,6 @@
 {
   "name": "@rezaiyan/ledger",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Claude Code cost + session intelligence tool",
   "author": "rezaiyan",
   "license": "MIT",
@@ -27,7 +27,9 @@
     "src/",
     "commands/"
   ],
-  "bin": { "ledger": "./bin/ledger.ts" },
+  "bin": {
+    "ledger": "./bin/ledger.ts"
+  },
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run web:dev\"",
     "server:dev": "tsx watch server/server.ts",
