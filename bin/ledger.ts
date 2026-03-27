@@ -33,6 +33,7 @@ import {
   shortModel,
   truncate,
 } from '../tui/utils.js';
+import { setActiveCurrency, SUPPORTED_CURRENCIES, type CurrencyCode } from '../src/currency.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -478,6 +479,130 @@ async function cmdOpen(opts: {
 }
 
 // ---------------------------------------------------------------------------
+// Command: report (default)
+// ---------------------------------------------------------------------------
+
+async function cmdReport(opts: {
+  port: number;
+  dir: string;
+  sessionsDir: string;
+}): Promise<void> {
+  const isTTY = process.stdout.isTTY;
+  if (isTTY) {
+    // Go up 2 lines (npm's header lines) and clear, then show loading indicator
+    process.stdout.write('\x1b[2A\x1b[0J' + chalk.dim('  ⬡ Ledger  loading…'));
+  }
+
+  let today: PeriodSummary;
+  let thisMonth: PeriodSummary;
+  let activeSession: Record<string, unknown> | null = null;
+  let recentConversations: ParsedConversation[] = [];
+
+  interface SummaryResponse { today: PeriodSummary; thisMonth: PeriodSummary }
+  interface ConversationsResponse extends Array<unknown> {}
+
+  const [status, summaryData, convsData] = await Promise.all([
+    fetchApi<StatusResponse>(opts.port, '/status'),
+    fetchApi<SummaryResponse>(opts.port, '/summary'),
+    fetchApi<ConversationsResponse>(opts.port, '/conversations'),
+  ]);
+
+  if (status && summaryData) {
+    today = summaryData.today;
+    thisMonth = summaryData.thisMonth;
+    activeSession = status.currentSession ?? null;
+  } else {
+    const conversations = await parseAllConversations(opts.dir);
+    const now = new Date();
+    today = buildPeriodSummary(conversations, startOfDay(now));
+    thisMonth = buildPeriodSummary(conversations, startOfMonth(now));
+  }
+
+  if (convsData && Array.isArray(convsData)) {
+    recentConversations = (convsData as Array<Record<string, unknown>>)
+      .map((c) => ({
+        ...(c as unknown as ParsedConversation),
+        startTime: new Date(c['startTime'] as string),
+        endTime: new Date(c['endTime'] as string),
+      }))
+      .slice(0, 8);
+  } else if (!status) {
+    const conversations = await parseAllConversations(opts.dir);
+    recentConversations = conversations.slice(0, 8);
+  }
+
+  const now = new Date();
+  const sep = chalk.gray('─'.repeat(57));
+  const pad = 16;
+
+  // Clear loading indicator before printing report
+  if (isTTY) process.stdout.write('\r\x1b[2K');
+
+  // Header
+  console.log(chalk.cyan('┌─ Ledger ') + chalk.gray('─'.repeat(38)) + chalk.cyan('─┐'));
+  console.log(chalk.cyan('│') + ' '.repeat(57) + chalk.cyan('│'));
+
+  // TODAY / MONTH
+  const todayLine = chalk.bold.yellow('TODAY'.padEnd(7)) + ' ' + chalk.cyan(formatCost(today.cost)) +
+    chalk.gray(' · ' + (today.conversations) + ' conversations');
+  const monthLine = chalk.bold.yellow('MONTH'.padEnd(7)) + ' ' + chalk.cyan(formatCost(thisMonth.cost)) +
+    chalk.gray(' · ' + (thisMonth.conversations) + ' conversations');
+
+  console.log(chalk.cyan('│  ') + todayLine + chalk.cyan(' ').repeat(0));
+  console.log(chalk.cyan('│  ') + monthLine);
+  console.log(chalk.cyan('│') + ' '.repeat(57) + chalk.cyan('│'));
+
+  // Active session
+  console.log(chalk.cyan('│  ') + chalk.gray('─── ACTIVE SESSION ') + chalk.gray('─'.repeat(36)));
+  if (activeSession && typeof activeSession['name'] === 'string') {
+    const name = activeSession['name'] as string;
+    const cost = typeof activeSession['cost'] === 'number' ? formatCost(activeSession['cost']) : '—';
+    const model = typeof activeSession['model'] === 'string' ? shortModel(activeSession['model']) : '—';
+    const startIso = typeof activeSession['startTime'] === 'string' ? activeSession['startTime'] as string : null;
+    const durStr = startIso ? formatDuration((Date.now() - new Date(startIso).getTime()) / 60_000) : '';
+    const cacheHit = typeof activeSession['cacheHitRate'] === 'number'
+      ? formatCacheHit(activeSession['cacheHitRate'] as number) : '—';
+    console.log(chalk.cyan('│  ') + chalk.bold.white(name) + (durStr ? chalk.gray('  started ' + durStr + ' ago') : ''));
+    console.log(chalk.cyan('│  ') + chalk.gray('cost: ') + chalk.cyan(cost) +
+      chalk.gray('  ·  cache: ') + chalk.white(cacheHit) +
+      chalk.gray('  ·  ') + chalk.magenta(model));
+  } else {
+    console.log(chalk.cyan('│  ') + chalk.gray('No active session'));
+  }
+  console.log(chalk.cyan('│') + ' '.repeat(57) + chalk.cyan('│'));
+
+  // Recent conversations
+  console.log(chalk.cyan('│  ') + chalk.gray('─── RECENT CONVERSATIONS ') + chalk.gray('─'.repeat(30)));
+  if (recentConversations.length === 0) {
+    console.log(chalk.cyan('│  ') + chalk.gray('No conversations found'));
+  } else {
+    for (const conv of recentConversations) {
+      const dateStr = conv.startTime.toISOString().slice(0, 10);
+      const cwd = truncate(conv.cwd || conv.projectSlug, 20);
+      const cost = formatCost(conv.totalCost);
+      const cache = formatCacheHit(conv.cacheHitRate);
+      const model = shortModel(conv.model);
+      const dur = formatDuration(conv.durationMin);
+      console.log(
+        chalk.cyan('│  ') +
+        chalk.gray(dateStr + '  ') +
+        chalk.white(cwd.padEnd(22)) +
+        chalk.cyan(cost.padStart(7) + '  ') +
+        chalk.yellow(cache.padStart(4) + '  ') +
+        chalk.magenta(model.padEnd(7) + '  ') +
+        chalk.gray(dur)
+      );
+    }
+  }
+
+  // Footer
+  console.log(chalk.cyan('│') + ' '.repeat(57) + chalk.cyan('│'));
+  console.log(chalk.cyan('│  ') + chalk.gray('run "ledger tui" for interactive dashboard'));
+  console.log(chalk.cyan('└') + chalk.gray('─'.repeat(57)) + chalk.cyan('┘'));
+  process.exit(0);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -489,22 +614,51 @@ program
   .version('0.1.0')
   .option('--dir <path>', 'JSONL source directory', DEFAULT_CLAUDE_DIR)
   .option('--sessions-dir <path>', 'Sessions directory', DEFAULT_SESSIONS_DIR)
-  .option('--port <number>', 'Server port', String(DEFAULT_PORT));
+  .option('--port <number>', 'Server port', String(DEFAULT_PORT))
+  .option(
+    '--currency <code>',
+    `Display currency (${SUPPORTED_CURRENCIES.join(', ')})`,
+    'USD'
+  );
 
-// Default action: launch TUI
+// Apply currency setting before any command executes
+program.hook('preAction', () => {
+  const opts = program.opts<{ currency?: string }>();
+  const code = opts.currency?.toUpperCase() as CurrencyCode | undefined;
+  if (code && SUPPORTED_CURRENCIES.includes(code)) {
+    setActiveCurrency(code);
+  } else if (opts.currency) {
+    console.error(
+      chalk.yellow(`Unknown currency "${opts.currency}". Supported: ${SUPPORTED_CURRENCIES.join(', ')}`)
+    );
+  }
+});
+
+// Default action: print report and exit
 program.action(async () => {
   const opts = program.opts<{ dir: string; sessionsDir: string; port: string }>();
-  const port = parseInt(opts.port, 10);
-  const claudeDir = opts.dir;
-  const sessionsDir = opts.sessionsDir;
-
-  // Dynamically import App so Ink doesn't try to render during other commands
-  const { default: App } = await import('../tui/App.js');
-  render(
-    React.createElement(App, { port, claudeDir, sessionsDir }),
-    { exitOnCtrlC: true }
-  );
+  await cmdReport({
+    port: parseInt(opts.port, 10),
+    dir: opts.dir,
+    sessionsDir: opts.sessionsDir,
+  });
 });
+
+// ledger tui
+program
+  .command('tui')
+  .description('Launch interactive TUI dashboard')
+  .action(async () => {
+    const opts = program.opts<{ dir: string; sessionsDir: string; port: string }>();
+    const port = parseInt(opts.port, 10);
+    const claudeDir = opts.dir;
+    const sessionsDir = opts.sessionsDir;
+    const { default: App } = await import('../tui/App.js');
+    render(
+      React.createElement(App, { port, claudeDir, sessionsDir }),
+      { exitOnCtrlC: true }
+    );
+  });
 
 // ledger status
 program

@@ -6,7 +6,7 @@ Track Claude Code costs and work sessions — terminal dashboard, web UI, and sl
 
 ```bash
 npm install
-npm run ledger        # interactive TUI dashboard
+npm run ledger        # print cost report and exit
 npm run dev           # web dashboard at http://localhost:4200
 ```
 
@@ -14,7 +14,8 @@ npm run dev           # web dashboard at http://localhost:4200
 
 | Command | Description |
 |---|---|
-| `ledger` | Launch interactive TUI dashboard |
+| `ledger` | Print cost report and exit |
+| `ledger tui` | Launch interactive TUI dashboard |
 | `ledger status` | Print current session status line |
 | `ledger status -s` | Ultra-compact format for shell prompt |
 | `ledger today` | Print today's cost summary |

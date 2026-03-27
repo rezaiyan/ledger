@@ -2,12 +2,7 @@
  * Shared TUI formatting utilities.
  */
 
-/**
- * Format a dollar cost as "$X.XX".
- */
-export function formatCost(cost: number): string {
-  return `$${cost.toFixed(2)}`;
-}
+export { formatCost } from '../src/currency.js';
 
 /**
  * Format a duration in minutes as "47min", "1h 23m", etc.

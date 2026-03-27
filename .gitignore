@@ -3,3 +3,6 @@ dist/
 sessions/
 .DS_Store
 *.local
+.claude/
+.idea/
+pi-telegram-plan.md
