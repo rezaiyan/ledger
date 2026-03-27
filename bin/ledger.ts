@@ -618,7 +618,7 @@ program
   .option(
     '--currency <code>',
     `Display currency (${SUPPORTED_CURRENCIES.join(', ')})`,
-    'USD'
+    'EUR'
   );
 
 // Apply currency setting before any command executes

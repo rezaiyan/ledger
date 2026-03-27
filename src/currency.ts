@@ -123,9 +123,9 @@ function validateCurrencyCode(code: string): code is CurrencyCode {
 let _active: CurrencyCode = (() => {
   if (ENV_CURRENCY && validateCurrencyCode(ENV_CURRENCY)) return ENV_CURRENCY;
   if (ENV_CURRENCY) {
-    console.warn(`[currency] Unknown LEDGER_CURRENCY="${ENV_CURRENCY}", defaulting to USD`);
+    console.warn(`[currency] Unknown LEDGER_CURRENCY="${ENV_CURRENCY}", defaulting to EUR`);
   }
-  return 'USD';
+  return 'EUR';
 })();
 
 export function setActiveCurrency(code: CurrencyCode): void {
