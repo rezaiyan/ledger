@@ -20,8 +20,12 @@ import path from 'path';
 import os from 'os';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import { render } from 'ink';
 import React from 'react';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json') as { version: string };
 
 import { parseAllConversations } from '../server/parser/jsonl.js';
 import type { ParsedConversation, PeriodSummary, EnrichedSession } from '../src/types.js';
@@ -611,7 +615,7 @@ const program = new Command();
 program
   .name('ledger')
   .description('Claude Code cost + session intelligence')
-  .version('0.1.0')
+  .version(version)
   .option('--dir <path>', 'JSONL source directory', DEFAULT_CLAUDE_DIR)
   .option('--sessions-dir <path>', 'Sessions directory', DEFAULT_SESSIONS_DIR)
   .option('--port <number>', 'Server port', String(DEFAULT_PORT))
