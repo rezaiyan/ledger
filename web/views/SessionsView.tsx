@@ -102,7 +102,7 @@ function JournalPanel({ session }: { session: EnrichedSession }) {
 }
 
 export default function SessionsView() {
-  const { data: sessions, loading, error } = useSessions()
+  const { data: sessions, loading, error, refetch } = useSessions()
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(ALL_TYPES)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -123,8 +123,11 @@ export default function SessionsView() {
 
   if (loading) return <Spinner />
   if (error) return (
-    <div style={{ background: '#160b0b', border: '1px solid #4a1218', borderRadius: 8, padding: '16px 20px', color: '#ff7b72' }}>
-      Failed to load sessions: {error}
+    <div style={{ background: '#160b0b', border: '1px solid #4a1218', borderRadius: 8, padding: '16px 20px', color: '#ff7b72', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <span>Failed to load sessions: {error}</span>
+      <button onClick={refetch} style={{ background: 'transparent', border: '1px solid #f85149', borderRadius: 6, color: '#ff7b72', cursor: 'pointer', fontSize: 12, padding: '4px 10px' }}>
+        Retry
+      </button>
     </div>
   )
   if (!sessions?.length) return (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { ParsedConversation, EnrichedSession, PeriodSummary, SessionSummary } from '../../src/types'
 
 export interface SummaryResponse {
@@ -23,16 +23,21 @@ interface FetchState<T> {
   refetch: () => void
 }
 
+// How often to retry failed requests until the first successful response
+const RETRY_INTERVAL_MS = 5_000
+
 function useFetch<T>(url: string, pollInterval?: number): FetchState<T> {
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasData = useRef(false)
 
   const fetchData = useCallback(async () => {
     try {
       const res = await fetch(url)
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
       const json = await res.json()
+      hasData.current = true
       setData(json)
       setError(null)
     } catch (e) {
@@ -43,11 +48,17 @@ function useFetch<T>(url: string, pollInterval?: number): FetchState<T> {
   }, [url])
 
   useEffect(() => {
+    hasData.current = false
     fetchData()
-    if (pollInterval) {
-      const id = setInterval(fetchData, pollInterval)
-      return () => clearInterval(id)
-    }
+    // If an explicit pollInterval is given, use it. Otherwise retry every
+    // RETRY_INTERVAL_MS until the first successful response (handles the
+    // race condition where the browser opens before the server is ready).
+    const interval = pollInterval ?? RETRY_INTERVAL_MS
+    const id = setInterval(() => {
+      if (hasData.current && !pollInterval) return
+      fetchData()
+    }, interval)
+    return () => clearInterval(id)
   }, [fetchData, pollInterval])
 
   return { data, loading, error, refetch: fetchData }

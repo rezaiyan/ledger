@@ -87,11 +87,12 @@ const PctTooltip = ({ active, payload, label }: {
 }
 
 export default function EfficiencyView() {
-  const { data: sessions, loading: sessLoading } = useSessions()
-  const { data: summary, loading: sumLoading } = useSummary()
-  const { data: conversations, loading: convLoading } = useConversations()
+  const { data: sessions, loading: sessLoading, error: sessError } = useSessions()
+  const { data: summary, loading: sumLoading, error: sumError } = useSummary()
+  const { data: conversations, loading: convLoading, error: convError } = useConversations()
 
   const loading = sessLoading || sumLoading || convLoading
+  const fetchError = convError ?? sumError ?? sessError
 
   // Cost per commit by type
   const costPerCommitData = useMemo(() => {
@@ -169,6 +170,12 @@ export default function EfficiencyView() {
   const totalModelCost = modelPieData.reduce((s, d) => s + d.value, 0)
 
   if (loading) return <Spinner />
+
+  if (fetchError && !conversations && !sessions && !summary) return (
+    <div style={{ background: '#160b0b', border: '1px solid #4a1218', borderRadius: 8, padding: '16px 20px', color: '#ff7b72' }}>
+      Failed to load efficiency data: {fetchError}
+    </div>
+  )
 
   const sess = summary?.sessions
 

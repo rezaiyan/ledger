@@ -86,7 +86,7 @@ function DetailPanel({ conv }: { conv: ParsedConversation }) {
 const ALL_MODELS = '__all__'
 
 export default function ConversationsView() {
-  const { data: conversations, loading, error } = useConversations()
+  const { data: conversations, loading, error, refetch } = useConversations()
 
   const [sortKey, setSortKey] = useState<SortKey>('startTime')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -148,8 +148,11 @@ export default function ConversationsView() {
 
   if (loading) return <Spinner />
   if (error) return (
-    <div style={{ background: '#160b0b', border: '1px solid #4a1218', borderRadius: 8, padding: '16px 20px', color: '#ff7b72' }}>
-      Failed to load conversations: {error}
+    <div style={{ background: '#160b0b', border: '1px solid #4a1218', borderRadius: 8, padding: '16px 20px', color: '#ff7b72', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <span>Failed to load conversations: {error}</span>
+      <button onClick={refetch} style={{ background: 'transparent', border: '1px solid #f85149', borderRadius: 6, color: '#ff7b72', cursor: 'pointer', fontSize: 12, padding: '4px 10px' }}>
+        Retry
+      </button>
     </div>
   )
   if (!conversations?.length) return (
