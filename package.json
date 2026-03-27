@@ -1,8 +1,15 @@
 {
-  "name": "ledger",
+  "name": "@rezaiyan/ledger",
   "version": "0.1.0",
   "description": "Claude Code cost + session intelligence tool",
   "type": "module",
+  "files": [
+    "bin/",
+    "server/",
+    "tui/",
+    "src/",
+    "commands/"
+  ],
   "bin": { "ledger": "./bin/ledger.ts" },
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run web:dev\"",
