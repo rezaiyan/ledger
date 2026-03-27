@@ -25,7 +25,8 @@
     "server/",
     "tui/",
     "src/",
-    "commands/"
+    "commands/",
+    "dist/"
   ],
   "bin": {
     "ledger": "./bin/run.js"
