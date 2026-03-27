@@ -28,7 +28,7 @@
     "commands/"
   ],
   "bin": {
-    "ledger": "./bin/ledger.ts"
+    "ledger": "./bin/run.js"
   },
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run web:dev\"",
