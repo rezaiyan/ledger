@@ -38,7 +38,10 @@
     "build": "tsc && vite build",
     "server:start": "node dist/server/server.js",
     "ledger": "tsx bin/ledger.ts",
-    "tui": "tsx bin/ledger.ts"
+    "tui": "tsx bin/ledger.ts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "chalk": "^5.3.0",
@@ -47,14 +50,14 @@
     "date-fns": "^3.6.0",
     "express": "^5.0.0",
     "glob": "^11.0.0",
-    "tsx": "^4.19.0",
     "gray-matter": "^4.0.3",
     "ink": "^6.8.0",
     "ink-spinner": "^5.0.0",
     "open": "^10.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^2.13.0"
+    "recharts": "^2.13.0",
+    "tsx": "^4.19.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -63,8 +66,10 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "@vitest/ui": "^4.1.2",
     "concurrently": "^9.0.0",
     "typescript": "^5.6.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^4.1.2"
   }
 }
