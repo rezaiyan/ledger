@@ -154,8 +154,9 @@ function spawnServer(
   sessionsDir: string
 ): void {
   const serverPath = path.resolve(__dirname, '..', 'server', 'server.ts');
+  const tsx = path.resolve(__dirname, '..', 'node_modules', '.bin', 'tsx');
   const child = spawn(
-    'tsx',
+    tsx,
     [
       serverPath,
       '--port',
