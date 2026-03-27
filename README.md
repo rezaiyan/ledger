@@ -1,6 +1,15 @@
 # Ledger
 
+[![npm](https://img.shields.io/npm/v/@rezaiyan/ledger)](https://www.npmjs.com/package/@rezaiyan/ledger)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Track Claude Code costs and work sessions — terminal dashboard, web UI, and slash commands in one tool.
+
+## Install
+
+```bash
+npm install -g @rezaiyan/ledger
+```
 
 ## Quick Start
 
@@ -47,6 +56,10 @@ Session types: `feature`, `bug`, `refactor`, `explore`, `research` (default: `ot
 Ledger reads Claude Code's JSONL conversation logs from `~/.claude/projects/` and parses cost, token, model, and timing data directly — no API key required. The Express server (`server/server.ts`) exposes this data via a REST API at `/api/summary`, `/api/conversations`, `/api/sessions`, and `/api/status`. The web frontend (React + Recharts + Vite) and TUI (Ink) both consume this API.
 
 Work sessions are Markdown files written to `./sessions/` with YAML frontmatter. The slash commands are natural-language instruction files that Claude Code executes — they read and write these session files to track progress, costs, commits, and lessons over time.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 ## Credits
 

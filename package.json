@@ -2,6 +2,23 @@
   "name": "@rezaiyan/ledger",
   "version": "0.1.0",
   "description": "Claude Code cost + session intelligence tool",
+  "author": "rezaiyan",
+  "license": "MIT",
+  "homepage": "https://github.com/rezaiyan/ledger#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rezaiyan/ledger.git"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "ai",
+    "cost",
+    "usage",
+    "cli",
+    "dashboard"
+  ],
   "type": "module",
   "files": [
     "bin/",
