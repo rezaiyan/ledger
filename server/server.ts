@@ -8,6 +8,7 @@ import { parseAllConversations } from './parser/jsonl.js';
 import { parseAllSessions } from './parser/sessions.js';
 import { enrichAllSessions } from './parser/matcher.js';
 import { getSessionSummary } from './analyzer/efficiency.js';
+import { getActiveCurrency } from '../src/currency.js';
 import type {
   ParsedConversation,
   EnrichedSession,
@@ -225,6 +226,7 @@ function buildRouter(claudeDir: string, sessionsDir: string) {
         serverTime: now.toISOString(),
         claudeDir,
         sessionsDir,
+        currency: getActiveCurrency(),
       });
     } catch (err) {
       next(err);

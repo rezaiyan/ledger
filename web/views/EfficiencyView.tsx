@@ -7,7 +7,8 @@ import { useSessions, useSummary, useConversations } from '../hooks/useData'
 import StatCard from '../components/StatCard'
 import Badge from '../components/Badge'
 import EmptyState from '../components/EmptyState'
-import { fmtCost, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { fmtCost, fmtCostAxis, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { useCurrency } from '../hooks/useCurrency'
 import type { SessionType, EnrichedSession } from '../../src/types'
 
 const SESSION_TYPES: SessionType[] = ['feature', 'bug', 'refactor', 'explore', 'research', 'other']
@@ -43,6 +44,7 @@ const ChartTooltip = ({ active, payload, label }: {
   payload?: { name?: string; value?: number; color?: string }[]
   label?: string
 }) => {
+  const currency = useCurrency()
   if (!active || !payload?.length) return null
   return (
     <div style={{
@@ -55,7 +57,7 @@ const ChartTooltip = ({ active, payload, label }: {
       {label && <div style={{ color: '#8b949e', marginBottom: 4 }}>{label}</div>}
       {payload.map((p, i) => (
         <div key={i} style={{ color: p.color ?? '#e6edf3', fontWeight: 600 }}>
-          {p.name ? `${p.name}: ` : ''}{typeof p.value === 'number' ? fmtCost(p.value) : p.value}
+          {p.name ? `${p.name}: ` : ''}{typeof p.value === 'number' ? fmtCost(p.value, currency) : p.value}
         </div>
       ))}
     </div>
@@ -90,6 +92,9 @@ export default function EfficiencyView() {
   const { data: sessions, loading: sessLoading, error: sessError } = useSessions()
   const { data: summary, loading: sumLoading, error: sumError } = useSummary()
   const { data: conversations, loading: convLoading, error: convError } = useConversations()
+  const currency = useCurrency()
+  const fmt = (v: number) => fmtCost(v, currency)
+  const fmtAxis = (v: number) => fmtCostAxis(v, currency)
 
   const loading = sessLoading || sumLoading || convLoading
   const fetchError = convError ?? sumError ?? sessError
@@ -205,14 +210,14 @@ export default function EfficiencyView() {
               value={String(sess.deadEndSessions)}
               label="Dead-end sessions"
               accent={sess.deadEndSessions > 0 ? '#d29922' : '#3fb950'}
-              subtitle={`${fmtCost(sess.deadEndCost)} wasted`}
+              subtitle={`${fmt(sess.deadEndCost)} wasted`}
             />
             <StatCard
-              value={fmtCost(sess.avgCostPerSession)}
+              value={fmt(sess.avgCostPerSession)}
               label="Avg cost / session"
             />
             <StatCard
-              value={sess.avgCostPerCommit != null ? fmtCost(sess.avgCostPerCommit) : '—'}
+              value={sess.avgCostPerCommit != null ? fmt(sess.avgCostPerCommit) : '—'}
               label="Avg cost / commit"
             />
             <StatCard
@@ -241,7 +246,7 @@ export default function EfficiencyView() {
                   tick={{ fill: '#6e7681', fontSize: 10 }}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={v => `$${v.toFixed(2)}`}
+                  tickFormatter={fmtAxis}
                 />
                 <YAxis
                   dataKey="type"
@@ -373,7 +378,7 @@ export default function EfficiencyView() {
                       {s.goal || '—'}
                     </td>
                     <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, color: '#f85149' }}>
-                      {fmtCost(s.cost ?? 0)}
+                      {fmt(s.cost ?? 0)}
                     </td>
                     <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13 }}>
                       {s.durationMin != null ? fmtDuration(s.durationMin) : '—'}
@@ -420,7 +425,7 @@ export default function EfficiencyView() {
                     return (
                       <div style={{ background: '#1c2128', border: '1px solid #30363d', borderRadius: 6, padding: '8px 12px', fontSize: 12 }}>
                         <div style={{ color: '#e6edf3', fontWeight: 600 }}>{d.name}</div>
-                        <div style={{ color: d.payload.fill }}>{fmtCost(d.value as number)}</div>
+                        <div style={{ color: d.payload.fill }}>{fmt(d.value as number)}</div>
                         <div style={{ color: '#6e7681' }}>{((d.value as number / totalModelCost) * 100).toFixed(1)}%</div>
                       </div>
                     )
@@ -433,7 +438,7 @@ export default function EfficiencyView() {
                   <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 12, height: 12, borderRadius: 3, background: PIE_COLORS[i % PIE_COLORS.length], flexShrink: 0 }} />
                     <span style={{ fontSize: 13, color: '#c9d1d9', minWidth: 120 }}>{d.name}</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#e6edf3', minWidth: 60 }}>{fmtCost(d.value)}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#e6edf3', minWidth: 60 }}>{fmt(d.value)}</span>
                     <span style={{ fontSize: 11, color: '#6e7681' }}>
                       {((d.value / totalModelCost) * 100).toFixed(1)}%
                     </span>

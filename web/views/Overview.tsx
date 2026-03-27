@@ -5,7 +5,8 @@ import {
 import { useSummary, useStatus, useConversations, type StatusResponse } from '../hooks/useData'
 import StatCard from '../components/StatCard'
 import EmptyState from '../components/EmptyState'
-import { fmtCost, fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { fmtCost, fmtCostAxis, fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { useCurrency } from '../hooks/useCurrency'
 import type { ParsedConversation } from '../../src/types'
 
 function Spinner() {
@@ -42,6 +43,8 @@ function ActiveSessionCard({ currentSession, todayCost }: {
   currentSession: Record<string, unknown>
   todayCost: number
 }) {
+  const currency = useCurrency()
+  const fmt = (v: number) => fmtCost(v, currency)
   const name = (currentSession.name as string) ?? 'Active Session'
   const goal = currentSession.goal as string | undefined
   const cost = (currentSession.cost as number) ?? 0
@@ -73,7 +76,7 @@ function ActiveSessionCard({ currentSession, todayCost }: {
           )}
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: costColor(cost) }}>{fmtCost(cost)}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: costColor(cost) }}>{fmt(cost)}</div>
               <div style={{ fontSize: 11, color: '#6e7681' }}>session cost</div>
             </div>
             <div>
@@ -91,7 +94,7 @@ function ActiveSessionCard({ currentSession, todayCost }: {
 
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 13, color: '#8b949e' }}>Today's total</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: costColor(todayCost) }}>{fmtCost(todayCost)}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: costColor(todayCost) }}>{fmt(todayCost)}</div>
         </div>
       </div>
     </div>
@@ -123,6 +126,7 @@ const CustomTooltip = ({ active, payload, label }: {
   payload?: { value: number }[]
   label?: string
 }) => {
+  const currency = useCurrency()
   if (!active || !payload?.length) return null
   return (
     <div style={{
@@ -133,7 +137,7 @@ const CustomTooltip = ({ active, payload, label }: {
       fontSize: 12,
     }}>
       <div style={{ color: '#8b949e', marginBottom: 2 }}>{label}</div>
-      <div style={{ color: '#e6edf3', fontWeight: 600 }}>{fmtCost(payload[0].value)}</div>
+      <div style={{ color: '#e6edf3', fontWeight: 600 }}>{fmtCost(payload[0].value, currency)}</div>
     </div>
   )
 }
@@ -142,6 +146,9 @@ export default function Overview() {
   const summary = useSummary()
   const status = useStatus()
   const conversations = useConversations()
+  const currency = useCurrency()
+  const fmt = (v: number) => fmtCost(v, currency)
+  const fmtAxis = (v: number) => fmtCostAxis(v, currency)
 
   const dailyData = useMemo(() => {
     if (!conversations.data) return []
@@ -178,17 +185,17 @@ export default function Overview() {
       {/* Stat cards */}
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         <StatCard
-          value={fmtCost(today.cost)}
+          value={fmt(today.cost)}
           label="Today's cost"
           subtitle={`${today.conversations} conversation${today.conversations !== 1 ? 's' : ''}`}
         />
         <StatCard
-          value={fmtCost(thisMonth.cost)}
+          value={fmt(thisMonth.cost)}
           label="This month"
           subtitle={`${thisMonth.conversations} conversations`}
         />
         <StatCard
-          value={fmtCost(allTime.cost)}
+          value={fmt(allTime.cost)}
           label="All time"
           subtitle={`${allTime.conversations} total conversations`}
         />
@@ -225,7 +232,7 @@ export default function Overview() {
                   tick={{ fill: '#6e7681', fontSize: 10 }}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={v => `$${v.toFixed(0)}`}
+                  tickFormatter={fmtAxis}
                   width={36}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#ffffff0a' }} />
@@ -301,7 +308,7 @@ export default function Overview() {
                       {fmtPct(conv.cacheHitRate)}
                     </td>
                     <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, color: costColor(conv.totalCost) }}>
-                      {fmtCost(conv.totalCost)}
+                      {fmt(conv.totalCost)}
                     </td>
                   </tr>
                 ))}

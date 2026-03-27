@@ -3,14 +3,19 @@ import Overview from './views/Overview'
 import ConversationsView from './views/ConversationsView'
 import SessionsView from './views/SessionsView'
 import EfficiencyView from './views/EfficiencyView'
+import { CurrencyContext } from './hooks/useCurrency'
+import { useStatus } from './hooks/useData'
 
 type Tab = 'Overview' | 'Conversations' | 'Sessions' | 'Efficiency'
 const TABS: Tab[] = ['Overview', 'Conversations', 'Sessions', 'Efficiency']
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('Overview')
+  const status = useStatus()
+  const currency = status.data?.currency ?? 'USD'
 
   return (
+    <CurrencyContext.Provider value={currency}>
     <div style={{
       minHeight: '100vh',
       background: '#0d1117',
@@ -82,5 +87,6 @@ export default function App() {
         {activeTab === 'Efficiency' && <EfficiencyView />}
       </main>
     </div>
+    </CurrencyContext.Provider>
   )
 }

@@ -3,6 +3,7 @@ import { useConversations } from '../hooks/useData'
 import EmptyState from '../components/EmptyState'
 import Badge from '../components/Badge'
 import { fmtCost, fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { useCurrency } from '../hooks/useCurrency'
 import type { ParsedConversation } from '../../src/types'
 
 type SortKey = keyof Pick<
@@ -75,7 +76,7 @@ function DetailPanel({ conv }: { conv: ParsedConversation }) {
           </div>
           <div>
             <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Total Cost</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: costColor(conv.totalCost) }}>{fmtCost(conv.totalCost)}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: costColor(conv.totalCost) }}>{fmt(conv.totalCost)}</div>
           </div>
         </div>
       </td>
@@ -87,6 +88,8 @@ const ALL_MODELS = '__all__'
 
 export default function ConversationsView() {
   const { data: conversations, loading, error, refetch } = useConversations()
+  const currency = useCurrency()
+  const fmt = (v: number) => fmtCost(v, currency)
 
   const [sortKey, setSortKey] = useState<SortKey>('startTime')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -324,7 +327,7 @@ export default function ConversationsView() {
                         {fmtDuration(conv.durationMin)}
                       </td>
                       <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, textAlign: 'right', color: costColor(conv.totalCost) }}>
-                        {fmtCost(conv.totalCost)}
+                        {fmt(conv.totalCost)}
                       </td>
                       <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13, textAlign: 'right' }}>
                         {fmtTokens(conv.inputTokens)}

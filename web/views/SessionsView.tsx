@@ -3,6 +3,7 @@ import { useSessions } from '../hooks/useData'
 import EmptyState from '../components/EmptyState'
 import Badge from '../components/Badge'
 import { fmtCost, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { useCurrency } from '../hooks/useCurrency'
 import type { SessionType, EnrichedSession } from '../../src/types'
 
 const ALL_TYPES = '__all__' as const
@@ -103,6 +104,8 @@ function JournalPanel({ session }: { session: EnrichedSession }) {
 
 export default function SessionsView() {
   const { data: sessions, loading, error, refetch } = useSessions()
+  const currency = useCurrency()
+  const fmt = (v: number) => fmtCost(v, currency)
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(ALL_TYPES)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -256,13 +259,13 @@ export default function SessionsView() {
                         {session.goal || '—'}
                       </td>
                       <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, color: costColor(cost), whiteSpace: 'nowrap' }}>
-                        {fmtCost(cost)}
+                        {fmt(cost)}
                       </td>
                       <td style={{ padding: '10px 16px', color: commits > 0 ? '#e6edf3' : '#f85149', fontSize: 13, fontWeight: commits > 0 ? 400 : 600 }}>
                         {commits}
                       </td>
                       <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13 }}>
-                        {cpc != null ? fmtCost(cpc) : '—'}
+                        {cpc != null ? fmt(cpc) : '—'}
                       </td>
                       <td style={{ padding: '10px 16px', fontSize: 13, color: (session.cacheHitRate ?? 0) > 0.5 ? '#3fb950' : '#8b949e' }}>
                         {session.cacheHitRate != null ? fmtPct(session.cacheHitRate) : '—'}

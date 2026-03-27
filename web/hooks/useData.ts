@@ -14,6 +14,7 @@ export interface StatusResponse {
   serverTime: string
   claudeDir: string
   sessionsDir: string
+  currency: string
 }
 
 interface FetchState<T> {

@@ -1,6 +1,18 @@
-export function fmtCost(val: number): string {
-  if (val < 0.01) return '$0.00'
-  return `$${val.toFixed(2)}`
+export function fmtCost(val: number, currency = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(val)
+}
+
+export function fmtCostAxis(val: number, currency = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(val)
 }
 
 export function fmtTokens(n: number): string {
