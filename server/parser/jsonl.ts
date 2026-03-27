@@ -33,6 +33,39 @@ function extractProjectSlug(
   return parts[0] ?? path.basename(path.dirname(filePath));
 }
 
+/** Extract plain text from a user message's content field (string or content-block array). */
+function extractUserText(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    for (const block of content) {
+      if (
+        block != null &&
+        typeof block === 'object' &&
+        (block as Record<string, unknown>)['type'] === 'text'
+      ) {
+        const text = (block as Record<string, unknown>)['text'];
+        if (typeof text === 'string') return text;
+      }
+    }
+  }
+  return '';
+}
+
+/** Extract a short title from the first top-level user message. */
+function extractTitle(entries: RawEntry[]): string {
+  const first = entries.find(
+    (e) =>
+      e.type === 'user' &&
+      e.parentUuid == null &&
+      e.message != null
+  );
+  if (!first) return '';
+  const raw = extractUserText((first.message as Record<string, unknown>)['content']);
+  // Collapse whitespace and truncate
+  const clean = raw.replace(/\s+/g, ' ').trim();
+  return clean.length > 120 ? clean.slice(0, 117) + '…' : clean;
+}
+
 /** Detect subagent files: either path contains "subagents/" or any message has isSidechain. */
 function detectSubagent(
   filePath: string,
@@ -136,11 +169,13 @@ export async function parseConversation(
 
   const projectSlug = extractProjectSlug(filePath, claudeDir);
   const isSubagent  = detectSubagent(filePath, entries);
+  const title       = extractTitle(entries);
 
   return {
     sessionId,
     filePath,
     projectSlug,
+    title,
     startTime,
     endTime,
     durationMin,

@@ -8,7 +8,7 @@ import type { ParsedConversation } from '../../src/types'
 
 type SortKey = keyof Pick<
   ParsedConversation,
-  'startTime' | 'projectSlug' | 'durationMin' | 'totalCost' | 'inputTokens' | 'outputTokens' | 'cacheHitRate' | 'model' | 'webSearches'
+  'startTime' | 'projectSlug' | 'title' | 'durationMin' | 'totalCost' | 'inputTokens' | 'outputTokens' | 'cacheHitRate' | 'model' | 'webSearches'
 >
 
 function Spinner() {
@@ -140,6 +140,7 @@ export default function ConversationsView() {
   const cols: { label: string; key: SortKey; align?: 'right' }[] = [
     { label: 'Date', key: 'startTime' },
     { label: 'Project', key: 'projectSlug' },
+    { label: 'Title', key: 'title' },
     { label: 'Duration', key: 'durationMin', align: 'right' },
     { label: 'Cost', key: 'totalCost', align: 'right' },
     { label: 'Tokens In', key: 'inputTokens', align: 'right' },
@@ -320,8 +321,12 @@ export default function ConversationsView() {
                       <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13, whiteSpace: 'nowrap' }}>
                         {fmtDateShort(conv.startTime)}
                       </td>
-                      <td style={{ padding: '10px 16px', color: '#e6edf3', fontSize: 13, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '10px 16px', color: '#e6edf3', fontSize: 13, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {conv.projectSlug || <span style={{ color: '#6e7681' }}>—</span>}
+                      </td>
+                      <td style={{ padding: '10px 16px', color: '#c9d1d9', fontSize: 13, maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                          title={conv.title || undefined}>
+                        {conv.title || <span style={{ color: '#6e7681' }}>—</span>}
                       </td>
                       <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13, textAlign: 'right' }}>
                         {fmtDuration(conv.durationMin)}

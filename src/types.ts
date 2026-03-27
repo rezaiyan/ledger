@@ -43,6 +43,7 @@ export interface ParsedConversation {
   sessionId: string;
   filePath: string;
   projectSlug: string;
+  title: string;
   startTime: Date;
   endTime: Date;
   durationMin: number;
