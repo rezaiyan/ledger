@@ -62,9 +62,3 @@ Work sessions are Markdown files written to `./sessions/` with YAML frontmatter.
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-## Credits
-
-Built on patterns from:
-- [anthropics/claude-code](https://github.com/anthropics/claude-code) — JSONL log format and cost data
-- [nicholasgasior/gsfmt](https://github.com/nicholasgasior/gsfmt) — session tracking conventions
