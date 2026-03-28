@@ -2,14 +2,18 @@ import React, { useState, useMemo } from 'react'
 import { useConversations } from '../hooks/useData'
 import EmptyState from '../components/EmptyState'
 import Badge from '../components/Badge'
-import { fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel, fmtProjectSlug, groupConversations } from '../utils'
 import { useCurrency } from '../hooks/useCurrency'
-import type { ParsedConversation } from '../../src/types'
+import type { ConversationGroup } from '../utils'
 
 type SortKey = keyof Pick<
-  ParsedConversation,
+  ConversationGroup,
   'startTime' | 'projectSlug' | 'title' | 'durationMin' | 'totalCost' | 'inputTokens' | 'outputTokens' | 'cacheHitRate' | 'model' | 'webSearches'
 >
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
 
 function Spinner() {
   return (
@@ -31,54 +35,100 @@ function SortArrow({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   return <span style={{ color: '#3fb950', marginLeft: 4 }}>{dir === 'asc' ? '↑' : '↓'}</span>
 }
 
-function DetailPanel({ conv }: { conv: ParsedConversation }) {
+function SubagentRow({ conv, fmt }: { conv: ParsedConversation; fmt: (v: number) => string }) {
+  const label = conv.filePath.split('/').pop() ?? conv.filePath
+  return (
+    <tr style={{ borderBottom: '1px solid #21262d' }}>
+      <td style={{ padding: '8px 16px', color: '#8b949e', fontSize: 12, fontFamily: 'monospace', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {label}
+      </td>
+      <td style={{ padding: '8px 16px', color: '#8b949e', fontSize: 12, textAlign: 'right' }}>{fmtDuration(conv.durationMin)}</td>
+      <td style={{ padding: '8px 16px', fontSize: 12, fontWeight: 600, textAlign: 'right', color: costColor(conv.totalCost) }}>{fmt(conv.totalCost)}</td>
+      <td style={{ padding: '8px 16px', color: '#8b949e', fontSize: 12, textAlign: 'right' }}>{fmtTokens(conv.inputTokens)}</td>
+      <td style={{ padding: '8px 16px', color: '#8b949e', fontSize: 12, textAlign: 'right' }}>{fmtTokens(conv.outputTokens)}</td>
+      <td style={{ padding: '8px 16px', fontSize: 12, textAlign: 'right', color: conv.cacheHitRate > 0.5 ? '#3fb950' : '#8b949e' }}>{fmtPct(conv.cacheHitRate)}</td>
+      <td style={{ padding: '8px 16px', color: '#8b949e', fontSize: 12 }}>{conv.messages} msgs</td>
+    </tr>
+  )
+}
+
+function DetailPanel({ group }: { group: ConversationGroup }) {
   const { fmt } = useCurrency()
+  const allEntries = [...(group.parent ? [group.parent] : []), ...group.subagents]
+  const hasSubagents = group.subagents.length > 0
+
   return (
     <tr>
-      <td colSpan={9} style={{ background: '#0d1117', borderBottom: '1px solid #21262d', padding: 0 }}>
-        <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Session ID</div>
-            <div style={{ fontSize: 12, color: '#8b949e', fontFamily: 'monospace', wordBreak: 'break-all' }}>{conv.sessionId}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Working Dir</div>
-            <div style={{ fontSize: 12, color: '#8b949e', wordBreak: 'break-all' }}>{conv.cwd || '—'}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Messages</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#e6edf3' }}>{conv.messages}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Input Tokens</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#e6edf3' }}>{fmtTokens(conv.inputTokens)}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Output Tokens</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#e6edf3' }}>{fmtTokens(conv.outputTokens)}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Cache Writes</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#e6edf3' }}>{fmtTokens(conv.cacheCreationTokens)}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Cache Reads</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#3fb950' }}>{fmtTokens(conv.cacheReadTokens)}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Web Searches</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#e6edf3' }}>{conv.webSearches}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Subagent</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: conv.isSubagent ? '#d29922' : '#8b949e' }}>
-              {conv.isSubagent ? 'Yes' : 'No'}
+      <td colSpan={10} style={{ background: '#0d1117', borderBottom: '1px solid #21262d', padding: 0 }}>
+        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Aggregated stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Session ID</div>
+              <div style={{ fontSize: 12, color: '#8b949e', fontFamily: 'monospace', wordBreak: 'break-all' }}>{group.sessionId}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Working Dir</div>
+              <div style={{ fontSize: 12, color: '#8b949e', wordBreak: 'break-all' }}>{group.parent?.cwd || group.subagents[0]?.cwd || '—'}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Messages</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#e6edf3' }}>{group.messages}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Input Tokens</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#e6edf3' }}>{fmtTokens(group.inputTokens)}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Output Tokens</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#e6edf3' }}>{fmtTokens(group.outputTokens)}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Cache Writes</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#e6edf3' }}>{fmtTokens(group.cacheCreationTokens)}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Cache Reads</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#3fb950' }}>{fmtTokens(group.cacheReadTokens)}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Web Searches</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#e6edf3' }}>{group.webSearches}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Total Cost</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: costColor(group.totalCost) }}>{fmt(group.totalCost)}</div>
             </div>
           </div>
-          <div>
-            <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Total Cost</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: costColor(conv.totalCost) }}>{fmt(conv.totalCost)}</div>
-          </div>
+
+          {/* Subagent breakdown */}
+          {hasSubagents && (
+            <div>
+              <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>
+                Agents ({allEntries.length})
+              </div>
+              <div style={{ border: '1px solid #21262d', borderRadius: 6, overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #21262d', background: '#161b22' }}>
+                      {['File', 'Duration', 'Cost', 'Tokens In', 'Tokens Out', 'Cache%', 'Messages'].map(h => (
+                        <th key={h} style={{ padding: '6px 16px', fontSize: 10, fontWeight: 600, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: h === 'File' ? 'left' : 'right' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.parent && (
+                      <SubagentRow conv={group.parent} fmt={fmt} />
+                    )}
+                    {group.subagents.map(s => (
+                      <SubagentRow key={s.filePath} conv={s} fmt={fmt} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </td>
     </tr>
@@ -100,22 +150,25 @@ export default function ConversationsView() {
   const [filterDateEnd, setFilterDateEnd] = useState('')
   const [filterMinCost, setFilterMinCost] = useState('')
 
-  const models = useMemo(() => {
+  const groups = useMemo(() => {
     if (!conversations) return []
-    const s = new Set(conversations.map(c => c.model))
-    return Array.from(s).sort()
+    return groupConversations(conversations)
   }, [conversations])
 
+  const models = useMemo(() => {
+    const s = new Set(groups.map(g => g.model))
+    return Array.from(s).sort()
+  }, [groups])
+
   const filtered = useMemo(() => {
-    if (!conversations) return []
-    return conversations.filter(c => {
-      if (filterModel !== ALL_MODELS && c.model !== filterModel) return false
-      if (filterDateStart && new Date(c.startTime) < new Date(filterDateStart)) return false
-      if (filterDateEnd && new Date(c.startTime) > new Date(filterDateEnd + 'T23:59:59')) return false
-      if (filterMinCost && c.totalCost < parseFloat(filterMinCost)) return false
+    return groups.filter(g => {
+      if (filterModel !== ALL_MODELS && g.model !== filterModel) return false
+      if (filterDateStart && new Date(g.startTime) < new Date(filterDateStart)) return false
+      if (filterDateEnd && new Date(g.startTime) > new Date(filterDateEnd + 'T23:59:59')) return false
+      if (filterMinCost && g.totalCost < parseFloat(filterMinCost)) return false
       return true
     })
-  }, [conversations, filterModel, filterDateStart, filterDateEnd, filterMinCost])
+  }, [groups, filterModel, filterDateStart, filterDateEnd, filterMinCost])
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -252,7 +305,7 @@ export default function ConversationsView() {
         </div>
 
         <div style={{ marginLeft: 'auto', fontSize: 12, color: '#6e7681' }}>
-          {sorted.length} of {conversations.length} conversations
+          {sorted.length} of {groups.length} sessions
         </div>
 
         {(filterModel !== ALL_MODELS || filterDateStart || filterDateEnd || filterMinCost) && (
@@ -303,12 +356,13 @@ export default function ConversationsView() {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((conv, i) => {
-                const isSelected = selectedId === conv.sessionId
+              {sorted.map((group) => {
+                const isSelected = selectedId === group.sessionId
+                const agentCount = group.subagents.length
                 return (
-                  <React.Fragment key={conv.sessionId}>
+                  <React.Fragment key={group.sessionId}>
                     <tr
-                      onClick={() => setSelectedId(isSelected ? null : conv.sessionId)}
+                      onClick={() => setSelectedId(isSelected ? null : group.sessionId)}
                       style={{
                         borderBottom: '1px solid #21262d',
                         cursor: 'pointer',
@@ -319,38 +373,44 @@ export default function ConversationsView() {
                       onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                     >
                       <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13, whiteSpace: 'nowrap' }}>
-                        {fmtDateShort(conv.startTime)}
+                        {fmtDateShort(group.startTime)}
                       </td>
-                      <td style={{ padding: '10px 16px', color: '#e6edf3', fontSize: 13, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {conv.projectSlug || <span style={{ color: '#6e7681' }}>—</span>}
+                      <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 12, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                          title={group.projectSlug || undefined}>
+                        {group.projectSlug ? fmtProjectSlug(group.projectSlug) : <span style={{ color: '#6e7681' }}>—</span>}
                       </td>
-                      <td style={{ padding: '10px 16px', color: '#c9d1d9', fontSize: 13, maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                          title={conv.title || undefined}>
-                        {conv.title || <span style={{ color: '#6e7681' }}>—</span>}
-                      </td>
-                      <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13, textAlign: 'right' }}>
-                        {fmtDuration(conv.durationMin)}
-                      </td>
-                      <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, textAlign: 'right', color: costColor(conv.totalCost) }}>
-                        {fmt(conv.totalCost)}
-                      </td>
-                      <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13, textAlign: 'right' }}>
-                        {fmtTokens(conv.inputTokens)}
+                      <td style={{ padding: '10px 16px', fontSize: 13, maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                          title={group.title || undefined}>
+                        <span style={{ color: '#c9d1d9' }}>{group.title || <span style={{ color: '#6e7681' }}>—</span>}</span>
+                        {agentCount > 0 && (
+                          <span style={{ marginLeft: 8, fontSize: 11, color: '#6e7681', background: '#21262d', borderRadius: 4, padding: '1px 6px', flexShrink: 0 }}>
+                            +{agentCount} agent{agentCount !== 1 ? 's' : ''}
+                          </span>
+                        )}
                       </td>
                       <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13, textAlign: 'right' }}>
-                        {fmtTokens(conv.outputTokens)}
+                        {fmtDuration(group.durationMin)}
                       </td>
-                      <td style={{ padding: '10px 16px', fontSize: 13, textAlign: 'right', color: conv.cacheHitRate > 0.5 ? '#3fb950' : '#8b949e' }}>
-                        {fmtPct(conv.cacheHitRate)}
+                      <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, textAlign: 'right', color: costColor(group.totalCost) }}>
+                        {fmt(group.totalCost)}
+                      </td>
+                      <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13, textAlign: 'right' }}>
+                        {fmtTokens(group.inputTokens)}
+                      </td>
+                      <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13, textAlign: 'right' }}>
+                        {fmtTokens(group.outputTokens)}
+                      </td>
+                      <td style={{ padding: '10px 16px', fontSize: 13, textAlign: 'right', color: group.cacheHitRate > 0.5 ? '#3fb950' : '#8b949e' }}>
+                        {fmtPct(group.cacheHitRate)}
                       </td>
                       <td style={{ padding: '10px 16px' }}>
-                        <Badge label={shortModel(conv.model)} type="model" />
+                        <Badge label={shortModel(group.model)} type="model" />
                       </td>
-                      <td style={{ padding: '10px 16px', color: conv.webSearches > 0 ? '#d29922' : '#6e7681', fontSize: 13, textAlign: 'right' }}>
-                        {conv.webSearches}
+                      <td style={{ padding: '10px 16px', color: group.webSearches > 0 ? '#d29922' : '#6e7681', fontSize: 13, textAlign: 'right' }}>
+                        {group.webSearches}
                       </td>
                     </tr>
-                    {isSelected && <DetailPanel conv={conv} />}
+                    {isSelected && <DetailPanel group={group} />}
                   </React.Fragment>
                 )
               })}

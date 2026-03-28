@@ -5,9 +5,8 @@ import {
 import { useSummary, useStatus, useConversations } from '../hooks/useData'
 import StatCard from '../components/StatCard'
 import EmptyState from '../components/EmptyState'
-import { fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel } from '../utils'
+import { fmtTokens, fmtDuration, fmtDateShort, fmtPct, costColor, shortModel, fmtProjectSlug, groupConversations } from '../utils'
 import { useCurrency } from '../hooks/useCurrency'
-import type { ParsedConversation } from '../../src/types'
 
 function Spinner() {
   return (
@@ -157,8 +156,8 @@ export default function Overview() {
     const thisMonth = new Date()
     thisMonth.setDate(1)
     thisMonth.setHours(0, 0, 0, 0)
-    return conversations.data
-      .filter(c => new Date(c.startTime) >= thisMonth)
+    return groupConversations(conversations.data)
+      .filter(g => new Date(g.startTime) >= thisMonth)
       .sort((a, b) => b.totalCost - a.totalCost)
       .slice(0, 5)
   }, [conversations.data])
@@ -265,7 +264,7 @@ export default function Overview() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #21262d' }}>
-                  {['Project', 'Date', 'Duration', 'Tokens In', 'Tokens Out', 'Cache%', 'Cost'].map(h => (
+                  {['Project', 'Title', 'Model', 'Date', 'Cache%', 'Cost'].map(h => (
                     <th key={h} style={{
                       padding: '10px 16px',
                       textAlign: 'left',
@@ -279,33 +278,31 @@ export default function Overview() {
                 </tr>
               </thead>
               <tbody>
-                {topConversations.map((conv, i) => (
+                {topConversations.map((g, i) => (
                   <tr
-                    key={conv.sessionId}
+                    key={g.sessionId}
                     style={{
                       borderBottom: i < topConversations.length - 1 ? '1px solid #21262d' : 'none',
                     }}
                   >
-                    <td style={{ padding: '10px 16px', color: '#e6edf3', fontSize: 13 }}>
-                      {conv.projectSlug || '—'}
+                    <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 12, whiteSpace: 'nowrap' }}>
+                      {g.projectSlug ? fmtProjectSlug(g.projectSlug) : '—'}
+                    </td>
+                    <td style={{ padding: '10px 16px', color: '#c9d1d9', fontSize: 13, maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                        title={g.title || undefined}>
+                      {g.title || <span style={{ color: '#6e7681' }}>—</span>}
+                    </td>
+                    <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 12, whiteSpace: 'nowrap' }}>
+                      {shortModel(g.model)}
                     </td>
                     <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13, whiteSpace: 'nowrap' }}>
-                      {fmtDateShort(conv.startTime)}
+                      {fmtDateShort(g.startTime)}
                     </td>
-                    <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13 }}>
-                      {fmtDuration(conv.durationMin)}
+                    <td style={{ padding: '10px 16px', fontSize: 13, color: g.cacheHitRate > 0.5 ? '#3fb950' : '#8b949e' }}>
+                      {fmtPct(g.cacheHitRate)}
                     </td>
-                    <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13 }}>
-                      {fmtTokens(conv.inputTokens)}
-                    </td>
-                    <td style={{ padding: '10px 16px', color: '#8b949e', fontSize: 13 }}>
-                      {fmtTokens(conv.outputTokens)}
-                    </td>
-                    <td style={{ padding: '10px 16px', fontSize: 13, color: conv.cacheHitRate > 0.5 ? '#3fb950' : '#8b949e' }}>
-                      {fmtPct(conv.cacheHitRate)}
-                    </td>
-                    <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, color: costColor(conv.totalCost) }}>
-                      {fmt(conv.totalCost)}
+                    <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, color: costColor(g.totalCost) }}>
+                      {fmt(g.totalCost)}
                     </td>
                   </tr>
                 ))}

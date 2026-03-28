@@ -53,12 +53,13 @@ function extractUserText(content: unknown): string {
 
 /** Extract a short title from the first top-level user message. */
 function extractTitle(entries: RawEntry[]): string {
-  const first = entries.find(
-    (e) =>
-      e.type === 'user' &&
-      e.parentUuid == null &&
-      e.message != null
-  );
+  // Prefer a root message (parentUuid == null), but fall back to the first
+  // user entry for resumed sessions where all messages have a parentUuid.
+  const first =
+    entries.find(
+      (e) => e.type === 'user' && e.parentUuid == null && e.message != null
+    ) ??
+    entries.find((e) => e.type === 'user' && e.message != null);
   if (!first) return '';
   const raw = extractUserText((first.message as Record<string, unknown>)['content']);
   // Collapse whitespace and truncate
@@ -219,21 +220,28 @@ export async function findAllConversations(
 /**
  * Parse all conversations found under the Claude projects directory.
  * Skips files that fail to parse or contain no assistant messages.
+ * Processes in batches to avoid OOM on large ~/.claude/projects directories.
  */
 export async function parseAllConversations(
   claudeDir: string = DEFAULT_CLAUDE_DIR
 ): Promise<ParsedConversation[]> {
   const files = await findAllConversations(claudeDir);
 
-  const results = await Promise.allSettled(
-    files.map((f) => parseConversation(f, claudeDir))
-  );
-
   const conversations: ParsedConversation[] = [];
-  for (const result of results) {
-    if (result.status === 'fulfilled' && result.value != null) {
-      conversations.push(result.value);
+  const BATCH_SIZE = 50;
+
+  for (let i = 0; i < files.length; i += BATCH_SIZE) {
+    const batch = files.slice(i, i + BATCH_SIZE);
+    const results = await Promise.allSettled(
+      batch.map((f) => parseConversation(f, claudeDir))
+    );
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value != null) {
+        conversations.push(result.value);
+      }
     }
+    // Yield to the event loop between batches so GC can reclaim memory
+    await new Promise<void>((resolve) => setImmediate(resolve));
   }
 
   // Sort by startTime descending (newest first)

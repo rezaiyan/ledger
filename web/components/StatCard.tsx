@@ -18,22 +18,23 @@ export default function StatCard({ value, label, delta, deltaLabel, subtitle, ac
     <div style={{
       background: '#161b22',
       border: '1px solid #21262d',
+      borderTop: accent ? `2px solid ${accent}` : '1px solid #21262d',
       borderRadius: 8,
-      padding: '20px 24px',
+      padding: '16px 20px',
       minWidth: 0,
       flex: 1,
     }}>
       <div style={{
-        fontSize: 28,
+        fontSize: 26,
         fontWeight: 700,
         letterSpacing: '-0.5px',
         color: accent ?? '#e6edf3',
         lineHeight: 1.2,
-        marginBottom: 4,
+        marginBottom: 6,
       }}>
         {value}
       </div>
-      <div style={{ fontSize: 12, color: '#8b949e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      <div style={{ fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.6px', fontWeight: 500 }}>
         {label}
       </div>
       {delta !== undefined && (

@@ -62,21 +62,23 @@ export default function App() {
               <span style={{ fontSize: 11, color: '#6e7681', marginLeft: 4 }}>cost intelligence</span>
             </div>
 
-            <nav style={{ display: 'flex', gap: 4 }}>
+            <nav style={{ display: 'flex', height: '100%', alignItems: 'stretch' }}>
               {TABS.map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   style={{
-                    background: activeTab === tab ? '#21262d' : 'transparent',
-                    border: activeTab === tab ? '1px solid #30363d' : '1px solid transparent',
-                    borderRadius: 6,
-                    color: activeTab === tab ? '#e6edf3' : '#8b949e',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: `2px solid ${activeTab === tab ? '#3fb950' : 'transparent'}`,
+                    color: activeTab === tab ? '#e6edf3' : '#6e7681',
                     cursor: 'pointer',
                     fontSize: 13,
                     fontWeight: activeTab === tab ? 600 : 400,
-                    padding: '5px 12px',
-                    transition: 'all 0.15s',
+                    padding: '0 16px',
+                    transition: 'color 0.15s, border-color 0.15s',
+                    display: 'flex',
+                    alignItems: 'center',
                   }}
                 >
                   {tab}
