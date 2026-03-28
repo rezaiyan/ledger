@@ -5,6 +5,8 @@
 
 Track Claude Code costs and work sessions — terminal dashboard, web UI, and slash commands in one tool.
 
+**[Project page](https://alirezaiyan.com/projects/ledger)** · **[Blog post](https://alirezaiyan.com/blog/ledger-claude-code-cost-tracking)**
+
 ## Install
 
 ```bash
